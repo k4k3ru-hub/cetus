@@ -35,6 +35,27 @@ func TestQuoteExactInputReportsEmptyReturnValueDiagnostics(t *testing.T) {
 	}
 }
 
+func TestQuoteExactInputParsesSimulationEventResult(t *testing.T) {
+	value := make([]byte, 49)
+	binary.LittleEndian.PutUint64(value[0:8], 100)
+	binary.LittleEndian.PutUint64(value[8:16], 99)
+	binary.LittleEndian.PutUint64(value[16:24], 1)
+	binary.LittleEndian.PutUint64(value[24:32], 100)
+	value[32] = 5
+	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{
+		CommandResults: []onchainSui.SimulationCommandResult{{}},
+		Events:         []onchainSui.SimulationEvent{{Type: "0x5::fetcher_script::CalculatedSwapResultEvent", BCS: value}},
+	})
+
+	result, err := quoter.QuoteExactInput(context.Background(), QuoteExactInputParams{Sender: sender, Pool: pool, AmountIn: 100, A2B: true})
+	if err != nil {
+		t.Fatalf("QuoteExactInput() error = %v", err)
+	}
+	if result.AmountIn != 100 || result.AmountOut != 99 || result.FeeAmount != 1 {
+		t.Fatalf("QuoteExactInput() = %+v", result)
+	}
+}
+
 func TestQuoteExactInputReportsEmptyReturnValueBCSDiagnostics(t *testing.T) {
 	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{
 		CommandResults: []onchainSui.SimulationCommandResult{{ReturnValues: []onchainSui.CommandOutput{{JSON: map[string]any{"amount_in": "100"}}}}},

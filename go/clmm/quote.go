@@ -140,10 +140,35 @@ func (q *Quoter) quote(ctx context.Context, sender onchainSui.Address, poolConfi
 	}
 	commandResult := simulation.CommandResults[0]
 	if len(commandResult.ReturnValues) == 0 {
+		if len(simulation.Events) == 1 && len(simulation.Events[0].BCS) > 0 {
+			result, err := parseCalculatedSwapResult(simulation.Events[0].BCS)
+			if err != nil {
+				return QuoteResult{}, fmt.Errorf(
+					"failed to quote cetus clmm swap: failed to parse simulation event result: %w: event_type=%q event_bcs_length=%d event_json_present=%t",
+					err,
+					simulation.Events[0].Type,
+					len(simulation.Events[0].BCS),
+					simulation.Events[0].JSON != nil,
+				)
+			}
+			if result.AmountIn == 0 || result.AmountOut == 0 || result.IsExceed {
+				return QuoteResult{}, fmt.Errorf("failed to quote cetus clmm swap: quote=invalid result_source=simulation_event")
+			}
+			return result, nil
+		}
+		eventType, eventBCSLength, eventJSONPresent := "", 0, false
+		if len(simulation.Events) > 0 {
+			eventType = simulation.Events[0].Type
+			eventBCSLength = len(simulation.Events[0].BCS)
+			eventJSONPresent = simulation.Events[0].JSON != nil
+		}
 		return QuoteResult{}, fmt.Errorf(
-			"failed to quote cetus clmm swap: command_result=invalid command_count=1 return_value_count=0 mutated_by_ref_count=%d event_count=%d",
+			"failed to quote cetus clmm swap: command_result=invalid command_count=1 return_value_count=0 mutated_by_ref_count=%d event_count=%d first_event_type=%q first_event_bcs_length=%d first_event_json_present=%t",
 			len(commandResult.MutatedByRef),
 			len(simulation.Events),
+			eventType,
+			eventBCSLength,
+			eventJSONPresent,
 		)
 	}
 	returnValue := commandResult.ReturnValues[0]
