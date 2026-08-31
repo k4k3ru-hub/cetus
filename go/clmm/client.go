@@ -144,6 +144,25 @@ func (c *Client) QuoteExactInput(ctx context.Context, params QuoteExactInputPara
 	return c.quoter.QuoteExactInput(ctx, params)
 }
 
+// QuoteExactOutput simulates one exact-output Cetus CLMM swap.
+//
+// Parameters:
+//   - ctx: Request context.
+//   - params: Quote parameters.
+//
+// Returns:
+//   - Quote result.
+//   - Quote or simulation error.
+//
+// Version:
+//   - 2026-08-31: Added.
+func (c *Client) QuoteExactOutput(ctx context.Context, params QuoteExactOutputParams) (QuoteResult, error) {
+	if c == nil || c.quoter == nil {
+		return QuoteResult{}, fmt.Errorf("failed to quote cetus clmm exact output: client=null")
+	}
+	return c.quoter.QuoteExactOutput(ctx, params)
+}
+
 // Swaps gets a page of historical Cetus CLMM swaps.
 //
 // Parameters:

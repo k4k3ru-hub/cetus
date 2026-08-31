@@ -42,6 +42,7 @@ func ParseSwapEvent(event onchainSui.Event) (Swap, error) {
 		return Swap{}, err
 	}
 	swap.SequenceNumber = event.SequenceNumber
+	swap.Checkpoint = event.Checkpoint
 	swap.Transaction = event.Transaction
 	swap.Timestamp = event.Timestamp
 	return swap, nil

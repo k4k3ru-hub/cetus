@@ -44,6 +44,7 @@ func TestClientSwaps(t *testing.T) {
 	sender, _ := onchainSui.ParseAddress("0xa")
 	provider := &clientTestProvider{eventPage: onchainSui.EventPage{
 		Events: []onchainSui.Event{{
+			Checkpoint:     6,
 			SequenceNumber: 7,
 			Type:           testDeployment().Package.String() + "::pool::SwapEvent",
 			JSON:           json.RawMessage(`{"pool":"` + pool.String() + `","sender":"` + sender.String() + `","a2b":true,"amount_in":"100","amount_out":"99","fee_amount":"1","before_sqrt_price":"10","after_sqrt_price":"11"}`),
@@ -59,7 +60,7 @@ func TestClientSwaps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Swaps() returned an unexpected error: %v", err)
 	}
-	if len(page.Swaps) != 1 || page.Swaps[0].SequenceNumber != 7 || page.Swaps[0].AmountOut != 99 || !page.HasNextPage || page.NextCursor != "cursor" {
+	if len(page.Swaps) != 1 || page.Swaps[0].Checkpoint != 6 || page.Swaps[0].SequenceNumber != 7 || page.Swaps[0].AmountOut != 99 || !page.HasNextPage || page.NextCursor != "cursor" {
 		t.Fatalf("Swaps() = %+v", page)
 	}
 	if provider.eventQuery.Filter.Type != testDeployment().Package.String()+"::pool::SwapEvent" || provider.eventQuery.First != 20 {
