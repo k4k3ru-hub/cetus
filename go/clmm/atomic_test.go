@@ -52,7 +52,7 @@ func TestAppendFlashSwapAndBalanceSwap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build() returned an unexpected error: %v", err)
 	}
-	functions := []string{"flash_swap", "swap_pay_amount", "value", "flash_swap", "swap_pay_amount", "zero", "split", "join", "repay_flash_swap"}
+	functions := []string{"flash_swap", "swap_pay_amount", "value", "flash_swap", "swap_pay_amount", "zero", "split", "join", "join", "repay_flash_swap"}
 	if len(transaction.Commands) != len(functions) {
 		t.Fatalf("command count = %d, want %d", len(transaction.Commands), len(functions))
 	}

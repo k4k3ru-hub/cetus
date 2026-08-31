@@ -126,6 +126,7 @@ func AppendRepayFlashSwap(builder *onchainSui.ProgrammableTransactionBuilder, de
 //
 // Version:
 //   - 2026-08-31: Added.
+//   - 2026-09-01: Consumed the zero-valued flash-swap balance before repayment.
 func AppendSwap(builder *onchainSui.ProgrammableTransactionBuilder, deployment Deployment, pool Pool, balances SwapBalances, a2b, byAmountIn bool, amount onchainSui.Argument, sqrtPriceLimit *big.Int) (SwapBalances, error) {
 	flashSwap, err := appendFlashSwap(builder, deployment, pool, a2b, byAmountIn, amount, sqrtPriceLimit)
 	if err != nil {
@@ -147,6 +148,9 @@ func AppendSwap(builder *onchainSui.ProgrammableTransactionBuilder, deployment D
 		if err := onchainSui.AppendBalanceJoin(builder, pool.CoinTypeB, balances.BalanceB, flashSwap.BalanceB); err != nil {
 			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
 		}
+		if err := onchainSui.AppendBalanceJoin(builder, pool.CoinTypeA, balances.BalanceA, flashSwap.BalanceA); err != nil {
+			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
+		}
 		if err := AppendRepayFlashSwap(builder, deployment, pool, flashSwap, payA, payB); err != nil {
 			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
 		}
@@ -160,6 +164,9 @@ func AppendSwap(builder *onchainSui.ProgrammableTransactionBuilder, deployment D
 			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
 		}
 		if err := onchainSui.AppendBalanceJoin(builder, pool.CoinTypeA, balances.BalanceA, flashSwap.BalanceA); err != nil {
+			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
+		}
+		if err := onchainSui.AppendBalanceJoin(builder, pool.CoinTypeB, balances.BalanceB, flashSwap.BalanceB); err != nil {
 			return SwapBalances{}, fmt.Errorf("failed to append cetus clmm swap: %w", err)
 		}
 		if err := AppendRepayFlashSwap(builder, deployment, pool, flashSwap, payA, payB); err != nil {
