@@ -41,13 +41,12 @@ func TestComposeClient(t *testing.T) {
 
 func TestClientSwaps(t *testing.T) {
 	pool, _ := onchainSui.ParseAddress("0x9")
-	sender, _ := onchainSui.ParseAddress("0xa")
 	provider := &clientTestProvider{eventPage: onchainSui.EventPage{
 		Events: []onchainSui.Event{{
 			Checkpoint:     6,
 			SequenceNumber: 7,
 			Type:           testDeployment().Package.String() + "::pool::SwapEvent",
-			JSON:           json.RawMessage(`{"pool":"` + pool.String() + `","sender":"` + sender.String() + `","a2b":true,"amount_in":"100","amount_out":"99","fee_amount":"1","before_sqrt_price":"10","after_sqrt_price":"11"}`),
+			JSON:           json.RawMessage(`{"pool":"` + pool.String() + `","atob":true,"amount_in":"100","amount_out":"99","fee_amount":"1","before_sqrt_price":"10","after_sqrt_price":"11"}`),
 		}},
 		HasNextPage: true,
 		NextCursor:  "cursor",

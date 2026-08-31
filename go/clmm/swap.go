@@ -35,6 +35,7 @@ type Swap struct {
 //   - Parse or validation error.
 //
 // Version:
+//   - 2026-08-31: Supported the current atob field and optional sender in Cetus swap events.
 //   - 2026-08-30: Added.
 func ParseSwapEvent(event onchainSui.Event) (Swap, error) {
 	swap, err := parseSwapEvent(event.Type, event.JSON)
@@ -77,7 +78,8 @@ func parseSwapEvent(eventType string, eventJSON json.RawMessage) (Swap, error) {
 	var value struct {
 		Pool            string          `json:"pool"`
 		Sender          string          `json:"sender"`
-		A2B             bool            `json:"a2b"`
+		AToB            *bool           `json:"atob"`
+		A2B             *bool           `json:"a2b"`
 		AmountIn        json.RawMessage `json:"amount_in"`
 		AmountOut       json.RawMessage `json:"amount_out"`
 		FeeAmount       json.RawMessage `json:"fee_amount"`
@@ -91,9 +93,19 @@ func parseSwapEvent(eventType string, eventJSON json.RawMessage) (Swap, error) {
 	if err != nil {
 		return Swap{}, fmt.Errorf("failed to parse cetus clmm swap event: pool=invalid: %w", err)
 	}
-	sender, err := onchainSui.ParseAddress(value.Sender)
-	if err != nil {
-		return Swap{}, fmt.Errorf("failed to parse cetus clmm swap event: sender=invalid: %w", err)
+	var sender onchainSui.Address
+	if strings.TrimSpace(value.Sender) != "" {
+		sender, err = onchainSui.ParseAddress(value.Sender)
+		if err != nil {
+			return Swap{}, fmt.Errorf("failed to parse cetus clmm swap event: sender=invalid: %w", err)
+		}
+	}
+	a2b := value.AToB
+	if a2b == nil {
+		a2b = value.A2B
+	}
+	if a2b == nil {
+		return Swap{}, fmt.Errorf("failed to parse cetus clmm swap event: atob=invalid")
 	}
 	amountIn, err := jsonUint64(value.AmountIn)
 	if err != nil || amountIn == 0 {
@@ -115,5 +127,5 @@ func parseSwapEvent(eventType string, eventJSON json.RawMessage) (Swap, error) {
 	if err != nil {
 		return Swap{}, fmt.Errorf("failed to parse cetus clmm swap event: after_sqrt_price=invalid")
 	}
-	return Swap{Pool: pool, Sender: sender, A2B: value.A2B, AmountIn: amountIn, AmountOut: amountOut, FeeAmount: fee, BeforeSqrtPrice: before.String(), AfterSqrtPrice: after.String()}, nil
+	return Swap{Pool: pool, Sender: sender, A2B: *a2b, AmountIn: amountIn, AmountOut: amountOut, FeeAmount: fee, BeforeSqrtPrice: before.String(), AfterSqrtPrice: after.String()}, nil
 }
