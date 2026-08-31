@@ -3,6 +3,7 @@ package clmm
 import (
 	"context"
 	"encoding/binary"
+	"strings"
 	"testing"
 
 	onchainSui "github.com/k4k3ru-hub/onchain/go/sui"
@@ -11,6 +12,58 @@ import (
 type quoteTestSimulator struct {
 	request onchainSui.SimulationRequest
 	result  *onchainSui.SimulationResult
+}
+
+func TestQuoteExactInputReportsSimulationCommandDiagnostics(t *testing.T) {
+	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{})
+
+	_, err := quoter.QuoteExactInput(context.Background(), QuoteExactInputParams{Sender: sender, Pool: pool, AmountIn: 100, A2B: true})
+	if err == nil || !strings.Contains(err.Error(), "command_count=0 expected_command_count=1") {
+		t.Fatalf("QuoteExactInput() error = %v", err)
+	}
+}
+
+func TestQuoteExactInputReportsEmptyReturnValueDiagnostics(t *testing.T) {
+	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{
+		CommandResults: []onchainSui.SimulationCommandResult{{MutatedByRef: []onchainSui.CommandOutput{{}}}},
+		Events:         []onchainSui.SimulationEvent{{}},
+	})
+
+	_, err := quoter.QuoteExactInput(context.Background(), QuoteExactInputParams{Sender: sender, Pool: pool, AmountIn: 100, A2B: true})
+	if err == nil || !strings.Contains(err.Error(), "return_value_count=0 mutated_by_ref_count=1 event_count=1") {
+		t.Fatalf("QuoteExactInput() error = %v", err)
+	}
+}
+
+func TestQuoteExactInputReportsEmptyReturnValueBCSDiagnostics(t *testing.T) {
+	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{
+		CommandResults: []onchainSui.SimulationCommandResult{{ReturnValues: []onchainSui.CommandOutput{{JSON: map[string]any{"amount_in": "100"}}}}},
+	})
+
+	_, err := quoter.QuoteExactInput(context.Background(), QuoteExactInputParams{Sender: sender, Pool: pool, AmountIn: 100, A2B: true})
+	if err == nil || !strings.Contains(err.Error(), "return_value_bcs=empty return_value_json_present=true") {
+		t.Fatalf("QuoteExactInput() error = %v", err)
+	}
+}
+
+func quoteTestQuoter(t *testing.T, result *onchainSui.SimulationResult) (*Quoter, onchainSui.Address, Pool) {
+	t.Helper()
+
+	packageAddress, _ := onchainSui.ParseAddress("0x1")
+	fetcherPackage, _ := onchainSui.ParseAddress("0x5")
+	configAddress, _ := onchainSui.ParseAddress("0x2")
+	clockAddress, _ := onchainSui.ParseAddress("0x6")
+	poolAddress, _ := onchainSui.ParseAddress("0x3")
+	sender, _ := onchainSui.ParseAddress("0x4")
+	quoter, err := NewQuoter(Deployment{
+		Package: packageAddress, PublishedAt: packageAddress, FetcherPackage: fetcherPackage,
+		GlobalConfig: onchainSui.ObjectInput{Address: configAddress, Version: 1}, Clock: onchainSui.ObjectInput{Address: clockAddress, Version: 1},
+		PoolModule: "pool", FetcherModule: "fetcher_script",
+	}, &quoteTestSimulator{result: result})
+	if err != nil {
+		t.Fatalf("NewQuoter() error = %v", err)
+	}
+	return quoter, sender, Pool{Address: poolAddress, InitialVersion: 2, CoinTypeA: "0x2::sui::SUI", CoinTypeB: "0x3::usdc::USDC"}
 }
 
 func (s *quoteTestSimulator) SimulateTransaction(_ context.Context, request onchainSui.SimulationRequest) (*onchainSui.SimulationResult, error) {
