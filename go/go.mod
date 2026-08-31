@@ -2,7 +2,7 @@ module github.com/k4k3ru-hub/cetus/go
 
 go 1.25.7
 
-require github.com/k4k3ru-hub/onchain/go v0.0.0-20260831054451-1db13ea9c966
+require github.com/k4k3ru-hub/onchain/go v0.0.0-20260831065527-ef8c89057a26
 
 require (
 	github.com/golang/protobuf v1.5.4 // indirect
