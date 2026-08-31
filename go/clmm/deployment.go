@@ -8,12 +8,13 @@ import (
 )
 
 type Deployment struct {
-	Package       onchainSui.Address
-	PublishedAt   onchainSui.Address
-	GlobalConfig  onchainSui.ObjectInput
-	Clock         onchainSui.ObjectInput
-	PoolModule    string
-	FetcherModule string
+	Package        onchainSui.Address
+	PublishedAt    onchainSui.Address
+	FetcherPackage onchainSui.Address
+	GlobalConfig   onchainSui.ObjectInput
+	Clock          onchainSui.ObjectInput
+	PoolModule     string
+	FetcherModule  string
 }
 
 // Validate validates a Cetus CLMM deployment.
@@ -22,6 +23,7 @@ type Deployment struct {
 //   - Validation error.
 //
 // Version:
+//   - 2026-08-31: Required the separate Cetus integrate package used by quote fetchers.
 //   - 2026-08-30: Added.
 func (d Deployment) Validate() error {
 	if d.Package.IsZero() {
@@ -29,6 +31,9 @@ func (d Deployment) Validate() error {
 	}
 	if d.PublishedAt.IsZero() {
 		return fmt.Errorf("failed to validate cetus clmm deployment: published_at=empty")
+	}
+	if d.FetcherPackage.IsZero() {
+		return fmt.Errorf("failed to validate cetus clmm deployment: fetcher_package=empty")
 	}
 	if d.GlobalConfig.Address.IsZero() || d.GlobalConfig.Version == 0 {
 		return fmt.Errorf("failed to validate cetus clmm deployment: global_config=invalid")

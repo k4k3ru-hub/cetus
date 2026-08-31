@@ -52,6 +52,7 @@ type Quoter struct {
 //   - Construction error.
 //
 // Version:
+//   - 2026-08-31: Called the quote fetcher through its dedicated integrate package.
 //   - 2026-08-30: Added.
 func NewQuoter(deployment Deployment, simulator Simulator) (*Quoter, error) {
 	if err := deployment.Validate(); err != nil {
@@ -117,7 +118,7 @@ func (q *Quoter) quote(ctx context.Context, sender onchainSui.Address, poolConfi
 	byAmountInArgument, _ := builder.Pure(bcsBool(byAmountIn))
 	amountArgument, _ := builder.Pure(bcsUint64(amount))
 	_, err = builder.MoveCall(onchainSui.MoveCall{
-		Package: q.deployment.PublishedAt, Module: q.deployment.FetcherModule, Function: "calculate_swap_result",
+		Package: q.deployment.FetcherPackage, Module: q.deployment.FetcherModule, Function: "calculate_swap_result",
 		TypeArguments: []string{poolConfig.CoinTypeA, poolConfig.CoinTypeB}, Arguments: []onchainSui.Argument{pool, a2bArgument, byAmountInArgument, amountArgument},
 	})
 	if err != nil {

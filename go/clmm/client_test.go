@@ -70,14 +70,16 @@ func TestClientSwaps(t *testing.T) {
 
 func testDeployment() Deployment {
 	packageAddress, _ := onchainSui.ParseAddress("0x1")
+	fetcherPackage, _ := onchainSui.ParseAddress("0x5")
 	configAddress, _ := onchainSui.ParseAddress("0x2")
 	clockAddress, _ := onchainSui.ParseAddress("0x6")
 	return Deployment{
-		Package:       packageAddress,
-		PublishedAt:   packageAddress,
-		GlobalConfig:  onchainSui.ObjectInput{Address: configAddress, Version: 1},
-		Clock:         onchainSui.ObjectInput{Address: clockAddress, Version: 1},
-		PoolModule:    "pool",
-		FetcherModule: "fetcher_script",
+		Package:        packageAddress,
+		PublishedAt:    packageAddress,
+		FetcherPackage: fetcherPackage,
+		GlobalConfig:   onchainSui.ObjectInput{Address: configAddress, Version: 1},
+		Clock:          onchainSui.ObjectInput{Address: clockAddress, Version: 1},
+		PoolModule:     "pool",
+		FetcherModule:  "fetcher_script",
 	}
 }
