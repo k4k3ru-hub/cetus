@@ -217,6 +217,15 @@ func bcsUint64(value uint64) []byte {
 	return result
 }
 
+func bcsUint128(value *big.Int) []byte {
+	result := make([]byte, 16)
+	bytes := value.Bytes()
+	for i := range bytes {
+		result[i] = bytes[len(bytes)-1-i]
+	}
+	return result
+}
+
 func littleEndianUint128(value []byte) *big.Int {
 	reversed := append([]byte(nil), value...)
 	for left, right := 0, len(reversed)-1; left < right; left, right = left+1, right-1 {
