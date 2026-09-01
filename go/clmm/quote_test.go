@@ -153,3 +153,25 @@ func TestQuoteExactOutput(t *testing.T) {
 		t.Fatalf("QuoteExactOutput() = %+v request=%+v", result, simulator.request)
 	}
 }
+
+func TestQuotePairUsesOneSimulationCheckpoint(t *testing.T) {
+	value := make([]byte, 49)
+	binary.LittleEndian.PutUint64(value[0:8], 100)
+	binary.LittleEndian.PutUint64(value[8:16], 99)
+	checkpoint := onchainSui.CheckpointSequenceNumber(123)
+	quoter, sender, pool := quoteTestQuoter(t, &onchainSui.SimulationResult{Checkpoint: checkpoint, CommandResults: []onchainSui.SimulationCommandResult{
+		{ReturnValues: []onchainSui.CommandOutput{{BCS: value}}},
+		{ReturnValues: []onchainSui.CommandOutput{{BCS: value}}},
+	}})
+
+	result, err := quoter.QuotePair(context.Background(), QuotePairParams{
+		Bid: QuoteExactInputParams{Sender: sender, Pool: pool, AmountIn: 100, A2B: true},
+		Ask: QuoteExactOutputParams{Sender: sender, Pool: pool, AmountOut: 99, A2B: false},
+	})
+	if err != nil {
+		t.Fatalf("QuotePair() error = %v", err)
+	}
+	if result.Checkpoint != checkpoint || result.Bid.Checkpoint != checkpoint || result.Ask.Checkpoint != checkpoint {
+		t.Fatalf("QuotePair() = %+v", result)
+	}
+}
