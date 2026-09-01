@@ -34,6 +34,7 @@ type QuoteResult struct {
 	FeeRate        uint64
 	AfterSqrtPrice *big.Int
 	IsExceed       bool
+	Checkpoint     onchainSui.CheckpointSequenceNumber
 }
 
 type Quoter struct {
@@ -75,6 +76,7 @@ func NewQuoter(deployment Deployment, simulator Simulator) (*Quoter, error) {
 //   - Quote or simulation error.
 //
 // Version:
+//   - 2026-09-01: Returned the simulation checkpoint.
 //   - 2026-08-30: Added.
 func (q *Quoter) QuoteExactInput(ctx context.Context, params QuoteExactInputParams) (QuoteResult, error) {
 	return q.quote(ctx, params.Sender, params.Pool, params.AmountIn, params.A2B, true)
@@ -91,6 +93,7 @@ func (q *Quoter) QuoteExactInput(ctx context.Context, params QuoteExactInputPara
 //   - Quote or simulation error.
 //
 // Version:
+//   - 2026-09-01: Returned the simulation checkpoint.
 //   - 2026-08-31: Added.
 func (q *Quoter) QuoteExactOutput(ctx context.Context, params QuoteExactOutputParams) (QuoteResult, error) {
 	return q.quote(ctx, params.Sender, params.Pool, params.AmountOut, params.A2B, false)
@@ -154,6 +157,7 @@ func (q *Quoter) quote(ctx context.Context, sender onchainSui.Address, poolConfi
 			if result.AmountIn == 0 || result.AmountOut == 0 || result.IsExceed {
 				return QuoteResult{}, fmt.Errorf("failed to quote cetus clmm swap: quote=invalid result_source=simulation_event")
 			}
+			result.Checkpoint = simulation.Checkpoint
 			return result, nil
 		}
 		eventType, eventBCSLength, eventJSONPresent := "", 0, false
@@ -188,6 +192,7 @@ func (q *Quoter) quote(ctx context.Context, sender onchainSui.Address, poolConfi
 	if result.AmountIn == 0 || result.AmountOut == 0 || result.IsExceed {
 		return QuoteResult{}, fmt.Errorf("failed to quote cetus clmm swap: quote=invalid")
 	}
+	result.Checkpoint = simulation.Checkpoint
 	return result, nil
 }
 
